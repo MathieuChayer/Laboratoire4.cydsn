@@ -20,7 +20,17 @@ Parsa Maghsoudloo (1963539)
 #include <string.h>
 #include <stdio.h>
 
-SemaphoreHandle_t bouton_semph;
+SemaphoreHandle_t bouton_semph; //variable pour le semaphore
+
+task_params_t task_A = {
+    .delay = 1000,
+    .message = "Task A running\n\r" 
+};
+
+task_params_t task_B = {
+    .delay = 1000,
+    .message = "Task B running\n\r" 
+};
 
 
 //Partie 1 
@@ -64,11 +74,27 @@ void bouton_task(void)
     }
     else 
     {
-        UART_PutString("Bouton was released ! \n\n\r");   
+        UART_PutString("Bouton was released! \n\n\r");   
     }
    
   }
 }
+
+//Partie 3 : print_loop
+
+void print_loop(void * params)
+{
+    
+    task_params_t parametre = *(task_params_t *)params;
+    
+    for(;;)
+    {
+        vTaskDelay(pdMS_TO_TICKS(parametre.delay)); //Période du message
+        UART_PutString(parametre.message);   //Message  
+    }
+   
+}
+
 
 int main(void)
 {
@@ -90,6 +116,11 @@ int main(void)
     
     //Créer la tâche liée au bouton
     xTaskCreate(bouton_task,"Bouton_task",80,NULL,1,NULL);
+    
+    //Créer les deux taches de la partie 3
+    
+    xTaskCreate(print_loop,"Task A",configMINIMAL_STACK_SIZE, (void *) &task_A,1,NULL);
+    xTaskCreate(print_loop,"Task B",configMINIMAL_STACK_SIZE, (void *) &task_B,1,NULL);
     
     //Démarrer le Scheduler
     vTaskStartScheduler();
