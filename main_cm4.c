@@ -15,7 +15,7 @@ Parsa Maghsoudloo (1963539)
 #include "params.h"
 #include "queue.h"
 
-int x = 10; 
+
 int main(void)
 {
     __enable_irq(); /* Enable global interrupts. */
