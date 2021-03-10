@@ -2,7 +2,7 @@
 --	Conversion of Laboratoire4.v to vh2:
 --
 --	Cypress Semiconductor - WARP Version 6.3 IR 41
---	Wed Mar 10 14:29:39 2021
+--	Wed Mar 10 16:32:39 2021
 --
 
 USE cypress.cypress.all;
@@ -53,6 +53,7 @@ SIGNAL Net_4 : bit;
 SIGNAL tmpFB_0__Bouton_net_0 : bit;
 SIGNAL tmpIO_0__Bouton_net_0 : bit;
 TERMINAL tmpSIOVREF__Bouton_net_0 : bit;
+SIGNAL Net_16 : bit;
 BEGIN
 
 one <=  ('1') ;
@@ -231,6 +232,9 @@ Bouton_ISR:cy_mxs40_isr_v1_0
 	GENERIC MAP(cy_registers=>"",
 		deepsleep_required=>'0',
 		int_type=>"10")
-	PORT MAP(int_signal=>one);
+	PORT MAP(int_signal=>Net_16);
+GlobalSignal:cy_gsref_v1_0
+	GENERIC MAP(guid=>"8C3B410E-0600-5ECF-95DD-0AF91BF8D8A7")
+	PORT MAP(sig_out=>Net_16);
 
 END R_T_L;
