@@ -28,13 +28,17 @@ https://github.com/MathieuChayer/Laboratoire4.cydsn
 
 SemaphoreHandle_t bouton_semph; //variable pour le semaphore
 
+QueueHandle_t print_queue; //Variable pour la queue
+
+//Structure pour les deux tâches de la partie 3 : 
+
 task_params_t task_A = {
     .delay = 1000,
     .message = "Task A running\n\r" 
 };
 
 task_params_t task_B = {
-    .delay = 1000,
+    .delay = 999,
     .message = "Task B running\n\r" 
 };
 
@@ -71,8 +75,6 @@ void bouton_task(void)
     
     vTaskDelay(pdMS_TO_TICKS(20)); //Debouncing
     
-    //UART_PutString("Hello ! \n\n\r");
-    
     
     if (Cy_GPIO_Read(Bouton_PORT,Bouton_NUM) == 0)
     {
@@ -96,25 +98,45 @@ void print_loop(void * params)
     for(;;)
     {
         vTaskDelay(pdMS_TO_TICKS(parametre.delay)); //Période du message
-        UART_PutString(parametre.message);   //Message  
+        
+        //UART_PutString(parametre.message);   //Message pré partie Bonus
+        
+        //Modifications pour la partie bonus
+        char * p_message = parametre.message;
+        xQueueSend(print_queue,&p_message, portMAX_DELAY);
     }
    
+}
+
+//Fonction print pour lapPartie Bonus 
+void print()
+{
+    char *message;
+    for (;;) 
+    {
+        xQueueReceive(print_queue, &message, portMAX_DELAY);
+        UART_PutString(message);
+    }
 }
 
 
 int main(void)
 {
     bouton_semph = xSemaphoreCreateBinary(); //2.6 : Initialisation du sémaphore
+    
+    print_queue = xQueueCreate(2, sizeof(char *)); //initialisation de la queue
+    
 
     __enable_irq(); /* Enable global interrupts. */
     
  
-    UART_Start(); //Start UART
+    UART_Start(); 
     
     /* Initialisation de l'interuption liée au bouton sw2 */
     Cy_SysInt_Init(&Bouton_ISR_cfg, isr_bouton);
     NVIC_ClearPendingIRQ(Bouton_ISR_cfg.intrSrc);
     NVIC_EnableIRQ(Bouton_ISR_cfg.intrSrc);
+    
     
     
     //Créer la tâche de clignotement
@@ -124,9 +146,12 @@ int main(void)
     xTaskCreate(bouton_task,"Bouton_task",80,NULL,1,NULL);
     
     //Créer les deux taches de la partie 3
-    
     xTaskCreate(print_loop,"Task A",configMINIMAL_STACK_SIZE, (void *) &task_A,1,NULL);
     xTaskCreate(print_loop,"Task B",configMINIMAL_STACK_SIZE, (void *) &task_B,1,NULL);
+    
+    //Créer la tâche pour la partie bonus
+    xTaskCreate(print,"Print",configMINIMAL_STACK_SIZE, NULL,1,NULL);
+    
     
     //Démarrer le Scheduler
     vTaskStartScheduler();
